@@ -188,6 +188,10 @@ while readNotDone:
                 print(str(c) + ":" + s)
                 u = "".join(map(chr, m))
                 print(u)
+                ndefm = NdefMessage(m)
+                for r in ndefm.records:
+                    print(r)
+                    print(r.payload.get_contend())
 
 
             # We must stop crypto
