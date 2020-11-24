@@ -1,6 +1,5 @@
 from .mifare1k import MIFARE1k
 
-
 class RFIDUtil(object):
     rfid = None
     method = None

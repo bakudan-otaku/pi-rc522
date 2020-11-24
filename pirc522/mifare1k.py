@@ -37,7 +37,7 @@ class MIFARE1k(object):
                     he = "0x" + format(self.data[pos], '02x').upper()
                     ret = ret + " " + he
                 ret = ret + "  "
-                
+
                 for i in range(self.BLOCKWITH):
                     pos = i + block * self.BLOCKWITH
                     a = "."
@@ -59,7 +59,7 @@ class MIFARE1k(object):
                     pos = i + block * self.BLOCKWITH
                     ret.append(self.data[pos])
         return ret
-        
+
 
     def get_messages(self):
         """
@@ -107,8 +107,3 @@ class MIFARE1k(object):
             T = val # should be 0x00 or 0x03, we only care if it is 0x03 for the next val.
 
         return ret
-
-        
-        
-        
-    
