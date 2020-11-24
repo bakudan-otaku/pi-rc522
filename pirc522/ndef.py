@@ -1,11 +1,14 @@
 # Havyly influenced by pyndef: https://github.com/kichik/pyndef
 
-FLAGS_MB = 0x80
-FLAGS_ME = 0x40
-FLAGS_CHUNKED = 0x20
-FLAGS_SHORT = 0x10
-FLAGS_ID = 0x08
-FLAGS_TNF_MASK = 0x07
+NDEF_FLAGS_MB = 0x80
+NDEF_FLAGS_ME = 0x40
+NDEF_FLAGS_CHUNKED = 0x20
+NDEF_FLAGS_SHORT = 0x10
+NDEF_FLAGS_ID = 0x08
+NDEF_FLAGS_TNF_MASK = 0x07
+
+RTDT_FLAGS_UTF = 0x80
+RTDT_FLAGS_LANG_MASK = 0x3F
 
 class NdefMessage:
     records = []
@@ -36,12 +39,12 @@ class NdefRecordFlags:
     tnf = 0
     
     def __init__(self,flags_raw):
-        self.message_begin = bool(flags_raw & FLAGS_MB)
-        self.message_end = bool(flags_raw & FLAGS_ME)
-        self.chunked = bool(flags_raw & FLAGS_CHUNKED)
-        self.short_record = bool(flags_raw & FLAGS_SHORT)
-        self.id_pressend = bool(flags_raw & FLAGS_ID)
-        self.tnf = int(flags_raw & FLAGS_TNF_MASK)
+        self.message_begin = bool(flags_raw & NDEF_FLAGS_MB)
+        self.message_end = bool(flags_raw & NDEF_FLAGS_ME)
+        self.chunked = bool(flags_raw & NDEF_FLAGS_CHUNKED)
+        self.short_record = bool(flags_raw & NDEF_FLAGS_SHORT)
+        self.id_pressend = bool(flags_raw & NDEF_FLAGS_ID)
+        self.tnf = int(flags_raw & NDEF_FLAGS_TNF_MASK)
 
     def __str__(self):
         s = "MB: " + str(self.message_begin) + "; "
@@ -88,13 +91,13 @@ class NdefRecord:
         self.length += self.payload_id_length
         s = e
         e = s + self.payload_length
-        if True:
+        if self.payload_type == 'T' and self.flags.tnf == 1:
+            self.payload = RTD_Text(data[s:e], self.payload_length)
+        else:
             # payload unkown:
             self.payload = RTD(data[s:e], self.payload_length)
-        # if self.payload_type == 'T' && self.flags.tnf = 1:
-        #     self.payload = RTD_Text(data[s:e], self.payload_length)
         
-        # if self.payload_type == 'U' && self.flags.tnf = 1:
+        # if self.payload_type == 'U' and self.flags.tnf = 1:
         #     self.payload = RTD_URI(data[s:e], self.payload_length)
         self.length += self.payload_length
 
@@ -122,9 +125,39 @@ class RTD:
     def __str__(self):
         return str(self.length) + ": " + str(self.contend)
 
-class RTD_Text:
-    pass
+    def contend(self):
+        return self.contend
 
-class RTD_URI:
-    pass
+class RTD_Text(RTD):
+    contend = ""
+    length = 0
+    lang_code = ""
+    lang_length = 0
+    encoding = ""
+    rtd_type = "Text"
+
+    RTDT_FLAGS_UTF = 0x80
+    RTDT_FLAGS_LANG_MASK = 0x3F
+
+    def __init__(self, contend, length):
+        self.length = length
+        self.lang_length = int(contend[0] & RTDT_FLAGS_LANG_MASK)
+        self.lang = contend[1:1 + self.lang_length].decode(encoding="ascii")
+        if contend[0] & RTDT_FLAGS_UTF:
+            self.encoding = "UTF-16"
+        else:
+            self.encoding = "UTF-8"
+        self.contend = contend[1 + self.lang_length:length].decode(encoding=self.encoding)
+
+    def __str__(self):
+        s = str(self.length) + ": encoding: '" + self.encoding
+        s += "', lang: '" + self.lang
+        s += "', contend: '" + self.contend + "'"
+        return s
+
+    def contend(self):
+        return self.contend
     
+
+class RTD_URI(RTD):
+    pass
