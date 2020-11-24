@@ -1,3 +1,5 @@
+from .mifare1k import MIFARE1k
+
 
 class RFIDUtil(object):
     rfid = None
@@ -86,7 +88,7 @@ class RFIDUtil(object):
                 print("Not calling card_auth - already authed")
             return False
 
-    def write_trailer(self, sector, key_a=(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF), auth_bits=(0xFF, 0x07, 0x80), 
+    def write_trailer(self, sector, key_a=(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF), auth_bits=(0xFF, 0x07, 0x80),
                       user_data=0x69, key_b=(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF)):
         """
         Writes sector trailer of specified sector. Tag and auth must be set - does auth.
@@ -135,6 +137,36 @@ class RFIDUtil(object):
         else:
             print("Error on " + self.sector_string(block_address))
 
+    def get_block(self, block_address):
+        """
+        returns contents of block as array. Tag and auth must be set - does auth.
+        """
+        error = True
+        if not self.is_tag_set_auth():
+            return (error, [])
+
+        error = self.do_auth(block_address)
+        if not error:
+            return self.rfid.read(block_address)
+        return (error, [])
+
+    def read_out_hex(self, block_address):
+        """
+        Prints sector/block number and contents of block. Tag and auth must be set - does auth.
+        """
+        if not self.is_tag_set_auth():
+            return True
+
+        error = self.do_auth(block_address)
+        if not error:
+            (error, data) = self.rfid.read(block_address)
+            tmp = ""
+            for i in data:
+                tmp = tmp + str(hex(i)) + " "
+            print(self.sector_string(block_address) + ": " + tmp)
+        else:
+            print("Error on " + self.sector_string(block_address))
+
     def get_access_bits(self, c1, c2, c3):
         """
         Calculates the access bits for a sector trailer based on their access conditions
@@ -149,6 +181,19 @@ class RFIDUtil(object):
                  ((c2[3] & 1) << 3) + ((c2[2] & 1) << 2) + ((c2[1] & 1) << 1) + (c2[0] & 1)
         return byte_6, byte_7, byte_8
 
+    def dump_hex(self, sectors=16):
+        for i in range(sectors * 4):
+            self.read_out_hex(i)
+
     def dump(self, sectors=16):
         for i in range(sectors * 4):
             self.read_out(i)
+
+    def dump_data(self, start=0, end=16):
+        buf = []
+        for block in range(start * 4, end * 4):
+            (error, data) = self.get_block(block)
+            if error:
+                return None
+            buf = buf + data
+        return MIFARE1k(self.uid, buf)

@@ -5,3 +5,5 @@ try:
     from .util import RFIDUtil
 except RuntimeError:
     print("Must be used on Raspberry Pi or Beaglebone")
+
+
