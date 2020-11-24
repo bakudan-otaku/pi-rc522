@@ -10,6 +10,43 @@ NDEF_FLAGS_TNF_MASK = 0x07
 RTDT_FLAGS_UTF = 0x80
 RTDT_FLAGS_LANG_MASK = 0x3F
 
+RTDU_PREFIX_CODES = [ "",
+                      "http://www.",
+                      "https://www.",
+                      "http://",
+                      "https://",
+                      "tel:",
+                      "mailto:",
+                      "ftp://anonymous:anonymous@",
+                      "ftp://ftp.",
+                      "ftps://",
+                      "sftp://",
+                      "smb://",
+                      "nfs://",
+                      "ftp://",
+                      "dav://",
+                      "news:",
+                      "telnet://",
+                      "imap:",
+                      "rtsp://",
+                      "urn:",
+                      "pop:",
+                      "sip:",
+                      "sips:",
+                      "tftp:",
+                      "btspp://",
+                      "btl2cap://",
+                      "btgoep://",
+                      "tcpobex://",
+                      "irdaobex://",
+                      "file://",
+                      "urn:epc:id:",
+                      "urn:epc:tag:",
+                      "urn:epc:pat:",
+                      "urn:epc:raw:",
+                      "urn:epc:",
+                      "urn:nfc:" ]
+
 class NdefMessage:
     records = []
 
@@ -93,12 +130,12 @@ class NdefRecord:
         e = s + self.payload_length
         if self.payload_type == 'T' and self.flags.tnf == 1:
             self.payload = RTD_Text(data[s:e], self.payload_length)
+        elif self.payload_type == 'U' and self.flags.tnf == 1:
+            self.payload = RTD_URI(data[s:e], self.payload_length)
         else:
             # payload unkown:
             self.payload = RTD(data[s:e], self.payload_length)
         
-        # if self.payload_type == 'U' and self.flags.tnf = 1:
-        #     self.payload = RTD_URI(data[s:e], self.payload_length)
         self.length += self.payload_length
 
     def __str__(self):
@@ -125,7 +162,7 @@ class RTD:
     def __str__(self):
         return str(self.length) + ": " + str(self.contend)
 
-    def contend(self):
+    def get_contend(self):
         return self.contend
 
 class RTD_Text(RTD):
@@ -155,9 +192,24 @@ class RTD_Text(RTD):
         s += "', contend: '" + self.contend + "'"
         return s
 
-    def contend(self):
+    def get_contend(self):
         return self.contend
     
 
 class RTD_URI(RTD):
-    pass
+    contend = ""
+    length = 0
+    uri_prefix = 0
+
+    def __init__(self, contend, length):
+        self.length = length
+
+        self.uri_prefix = int(contend[0])
+        self.contend = contend[1:length].decode(encoding="UTF-8")
+
+    def get_contend(self):
+        return RTDU_PREFIX_CODES[self.uri_prefix] + self.contend
+
+    def __str__(self):
+        return str(self.length) + ": '" + self.get_contend() + "'"
+
