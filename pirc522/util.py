@@ -1,16 +1,14 @@
-from .mifare1k import MIFARE1k
 
 class RFIDUtil(object):
-    rfid = None
-    method = None
-    key = None
-    uid = None
-    last_auth = None
 
     debug = False
 
     def __init__(self, rfid):
         self.rfid = rfid
+        self.method = None
+        self.key = None
+        self.uid = None
+        self.last_auth = None
 
     def block_addr(self, sector, block):
         """
@@ -193,6 +191,6 @@ class RFIDUtil(object):
         for block in range(start * 4, end * 4):
             (error, data) = self.get_block(block)
             if error:
-                return None
+                return (error, [])
             buf = buf + data
-        return MIFARE1k(self.uid, buf)
+        return (False, buf)

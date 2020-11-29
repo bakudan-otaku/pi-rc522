@@ -4,10 +4,6 @@ class MIFARE1k(object):
     BLOCKSIZE = 4
     BLOCKWITH = 16
 
-    uid = None
-    data = []
-
-
     def __init__(self, uid, data):
         self.uid = uid
         self.data = data
@@ -107,3 +103,8 @@ class MIFARE1k(object):
             T = val # should be 0x00 or 0x03, we only care if it is 0x03 for the next val.
 
         return ret
+
+    def __eq__(self, other):
+        if other == None:
+            return False
+        return self.uid == other.uid and self.data == other.data
