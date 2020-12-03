@@ -446,6 +446,14 @@ class RFID(object):
             return None
 
 class RFIDLocked(RFID):
+    """
+    Add a function to break irq wait and set the shutdown flag.
+    wait_for_tag now returns True for normal operation, and False if it was interruped by stop()
+
+    This is needed if you want to use multithreading and have a clean shutdown
+    
+    Note: Cleanup musst be done after wait_for_tag(), so check if shutdown is set
+    """
     def __init__(self, bus=0, device=0, speed=1000000, pin_rst=def_pin_rst,
                  pin_ce=0, pin_irq=def_pin_irq, pin_mode = def_pin_mode):
         super(RFIDLocked, self).__init__(bus, device, speed, pin_rst, pin_ce, pin_irq, pin_mode)
@@ -472,7 +480,7 @@ class RFIDLocked(RFID):
             waiting = not self.irq.wait(0.1)
             with self.shutdown_lock:
                 if self.shutdown:
-                    # irq was released because of shutdown, break the waitrn
+                    # irq was released because of shutdown, break the wait
                     self.irq.clear()
                     return False
         self.irq.clear()
