@@ -67,14 +67,13 @@ class RFID(object):
 #  111 48 dB HEX = 0x07
 # 3 to 0 reserved - reserved for future use
 
-    authed = False
-    irq = threading.Event()
-
     def __init__(self, bus=0, device=0, speed=1000000, pin_rst=def_pin_rst,
             pin_ce=0, pin_irq=def_pin_irq, pin_mode = def_pin_mode):
         self.pin_rst = pin_rst
         self.pin_ce = pin_ce
         self.pin_irq = pin_irq
+        self.irq = threading.Event()
+        self.authed = False
 
         self.spi = SPIClass()
         self.spi.open(bus, device)
@@ -445,3 +444,43 @@ class RFID(object):
             return RFIDUtil(self)
         except ImportError:
             return None
+
+class RFIDLocked(RFID):
+    def __init__(self, bus=0, device=0, speed=1000000, pin_rst=def_pin_rst,
+                 pin_ce=0, pin_irq=def_pin_irq, pin_mode = def_pin_mode):
+        super(RFIDLocked, self).__init__(bus, device, speed, pin_rst, pin_ce, pin_irq, pin_mode)
+        self.shutdown = False
+        self.shutdown_lock = threading.Lock()
+
+    def wait_for_tag(self):
+        # enable IRQ on detect
+        self.init()
+        self.irq.clear()
+        self.dev_write(0x04, 0x00)
+        self.dev_write(0x02, 0xA0)
+        # wait for it
+        waiting = True
+        while waiting:
+            self.init()
+            #self.irq.clear()
+            self.dev_write(0x04, 0x00)
+            self.dev_write(0x02, 0xA0)
+
+            self.dev_write(0x09, 0x26)
+            self.dev_write(0x01, 0x0C)
+            self.dev_write(0x0D, 0x87)
+            waiting = not self.irq.wait(0.1)
+            with self.shutdown_lock:
+                if self.shutdown:
+                    # irq was released because of shutdown, break the waitrn
+                    self.irq.clear()
+                    return False
+        self.irq.clear()
+        self.init()
+        return True
+
+    def stop(self):
+        with self.shutdown_lock:
+            self.shutdown = True
+        self.irq.set()
+

@@ -1,7 +1,7 @@
 __version__ = "2.2.1"
 
 try:
-    from .rfid import RFID
+    from .rfid import RFID, RFIDLocked
     from .util import RFIDUtil
     from .ndef import NdefMessage, NdefRecordFlags, NdefRecord
     from .ndef import RTD, RTD_Text, RTD_URI

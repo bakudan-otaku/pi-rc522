@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from pirc522 import RFID, NdefMessage, MIFARE1k
 import signal
 import time
