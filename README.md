@@ -3,14 +3,9 @@ pi-rc522 consists of two Python classes for controlling an SPI RFID module "RC52
 
 Based on [MFRC522-python](https://github.com/mxgxw/MFRC522-python/blob/master/README.md).
 
-Install using pip:
+Get source code from Github:
 ```
-pip install pi-rc522
-```
-
-Or get source code from Github:
-```
-git clone https://github.com/ondryaso/pi-rc522.git
+git clone https://github.com/bakudan-otaku/pi-rc522.git
 cd pi-rc522
 python setup.py install
 ```
@@ -48,11 +43,13 @@ __NOTE:__ On Beaglebone Black, generally you have to enable the SPI for the spid
 You may change BOARD pinout to BCM py passing *pin_mode=RPi.GPIO.BCM*. Please note, that you then have to define all pins (irq+rst, ce if neccessary). Otherwise they would default to perhaps wrong pins (rst to pin 15/GPIO22, irq to pin 12/GPIO18).
 
 ## Usage
-The library is split to two classes - **RFID** and **RFIDUtil**. You can use only RFID, RFIDUtil just makes life a little bit better.
+The main library is split to two classes - **RFID** and **RFIDUtil**. You can use only RFID, RFIDUtil just makes life a little bit better. For the class **RFID** also exists a locking version **RFIDLocked**, witch allows to break the wait in a thread save way.
 You basically want to start with *while True* loop and "poll" the tag state. That's done using *request* method. Most of the methods
 return error state, which is simple boolean - True is error, False is not error. The *request* method returns True if tag is **not**
 present. If request is successful, you should call *anticoll* method. It runs anti-collision algorithms and returns used tag UID, which
 you'll use for *select_tag* method. Now you can do whatever you want. Important methods are documented. You can also look at the Read and KeyChange examples for RFIDUtil usage.
+To unpack the Ndef message format, the **NdefMessage** class will be helpfull, to get the records, there are 2 helper classes **RTD_URI** and **RTD_Text** which implement the basic Text and URI-Format, but only for read! Write is not implementet jet.
+If you work with 1K MIFARE tags, there is a **MIFARE1k** class to help, feel free to add more.
 
 ```python
 from pirc522 import RFID
