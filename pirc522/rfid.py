@@ -1,4 +1,5 @@
 import threading
+import logging
 
 RASPBERRY = object()
 BEAGLEBONE = object()
@@ -20,6 +21,8 @@ except ImportError:
     def_pin_rst = "P9_23"
     def_pin_irq = "P9_15"
     def_pin_mode = None
+
+logger = logging.getLogger(__name__)
 
 class RFID(object):
     pin_rst = 22
@@ -53,7 +56,7 @@ class RFID(object):
     reg_tx_control = 0x14
     length = 16
 
-    antenna_gain = 0x04
+    antenna_gain = 0x04    
 
 #antenna_gain
 #  defines the receiver's signal voltage gain factor:
@@ -194,8 +197,8 @@ class RFID(object):
             if (self.dev_read(0x06) & 0x1B) == 0x00:
                 error = False
 
-                if n & irq & 0x01:
-                    print("E1")
+                if n & irq & 0x01:                    
+                    logger.debug("E1")
                     error = True
 
                 if command == self.mode_transrec:
@@ -215,7 +218,7 @@ class RFID(object):
                     for i in range(n):
                         back_data.append(self.dev_read(0x09))
             else:
-                print("E2")
+                logger.debug("E2")
                 error = True
 
         return (error, back_data, back_length)
