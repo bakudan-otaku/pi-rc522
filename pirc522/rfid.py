@@ -492,3 +492,10 @@ class RFIDLocked(RFID):
             self.shutdown = True
         self.irq.set()
 
+    def cleanup(self):
+        """
+        Calls stop_crypto() if needed.
+        GPIO.cleanup must be done in mainthread!
+        """
+        if self.authed:
+            self.stop_crypto()
